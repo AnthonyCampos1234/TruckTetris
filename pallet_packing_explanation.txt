@@ -3,11 +3,11 @@ Intelligent Pallet Packing System Explanation
 
 1. Core Components
 -----------------
-- Rectangle: Base class for dimensions and properties (weight, stackability, product type)
-- PlacedRectangle: Extends Rectangle with position, rotation, and stacking information
+- Rectangle: Base class for dimensions and properties (weight, stackability, product type, overhang)
+- PlacedRectangle: Extends Rectangle with position, rotation, and overhang information
 - TruckLoadOptimizer: Main class handling intelligent packing logic
 - LoadingConstraints: Enum defining safety and practical constraints
-- Configuration: Separate config files for truck specs and product rules
+- Visualization: ASCII-based 2D representation of truck loading pattern
 
 2. The Intelligent Packing Approach
 --------------------------------
@@ -16,6 +16,7 @@ a) Skyline Strategy:
    - Maintains profile of placed pallets
    - Optimizes for lowest possible position
    - Updates dynamically with new placements
+   - Accounts for overhang in placement decisions
 
 b) Weight Distribution:
    - Tracks front/back weight ratio
@@ -24,96 +25,86 @@ b) Weight Distribution:
    - Monitors total weight limits
 
 c) Safety Constraints:
-   - Maintains tail clearance (8-10 inches)
-   - Ensures side clearance
+   - Maintains tail clearance (10 inches)
+   - Ensures side clearance (2 inches)
+   - Handles overhang on one or both sides
    - Respects stackability rules
-   - Considers product-specific requirements
 
-3. AI-Enhanced Packing Process
----------------------------
-a) Initialization:
-   - Sets up truck dimensions and weight limits
-   - Initializes tracking for weight distribution
-   - Establishes safety clearances
+3. Overhang Handling
+------------------
+a) Configuration:
+   - Overhang amount in inches
+   - Single-side or both-sides overhang
+   - Adjustment of effective pallet width
 
-b) For each pallet:
-   1. AI-driven sorting based on:
-      - Physical dimensions
-      - Weight considerations
-      - Stackability
-      - Product type constraints
-   
-   2. Optimal placement considering:
-      - Weight distribution
-      - Space efficiency
-      - Loading sequence
-      - Safety requirements
+b) Placement Logic:
+   - Considers total width including overhang
+   - Maintains proper spacing between pallets
+   - Adjusts x-position for both-sides overhang
+   - Visualizes overhang with '>' markers
 
-4. Key Methods
+4. Visualization System
+--------------------
+a) ASCII-based representation:
+   - Box-drawing characters for pallet borders (└┘┌┐─│)
+   - Overhang indicators (>)
+   - Scale factor of 8 inches per cell
+   - Clear distinction between pallets
+   - Front-to-back orientation
+
+b) Display Features:
+   - Truck boundaries
+   - Individual pallet outlines
+   - Overhang markers
+   - Loading direction indicator
+   - Scale information
+
+5. Key Methods
 -------------
-suggest_optimal_arrangement():
-- Uses AI to determine best packing sequence
-- Considers historical loading patterns
-- Calculates efficiency metrics
-- Generates loading instructions
-
-smart_sort_pallets():
-- Scores pallets based on multiple criteria
-- Weights different factors for optimization
-- Determines optimal loading sequence
-
 find_lowest_position():
+- Handles overhang in width calculations
 - Considers clearance constraints
 - Checks weight distribution
-- Validates placement feasibility
 - Returns optimal coordinates
 
-5. Advanced Features
-------------------
-- Real-time weight distribution tracking
-- Dynamic constraint handling
-- Stackability analysis
-- Product-specific rules
-- Loading instruction generation
-- Efficiency metrics calculation
+pack_pallet():
+- Attempts non-rotated placement first
+- Considers rotation if needed
+- Updates weight tracking
+- Maintains overhang information
+
+create_truck_visualization():
+- Generates ASCII representation
+- Scales dimensions appropriately
+- Draws pallet borders
+- Shows overhang markers
 
 6. Safety and Practical Considerations
 ----------------------------------
-- Tail clearance enforcement
-- Side clearance requirements
-- Weight distribution rules
-- Product compatibility checking
+- Tail clearance enforcement (10 inches)
+- Side clearance requirements (2 inches)
+- Weight distribution rules (60% front)
+- Overhang limitations and tracking
 - Stack height limitations
-- Support ratio requirements
+- Maximum weight monitoring (45000 lbs)
 
-7. Performance Characteristics
----------------------------
-Time Complexity:
-- Base packing: O(n * m) where:
-  * n = number of pallets
-  * m = number of skyline positions
-- AI optimization: O(n log n) for smart sorting
+7. Data Structures
+---------------
+Pallet Properties:
+- Dimensions (width x length)
+- Weight
+- Stackability
+- Product type
+- Overhang amount
+- Overhang configuration
 
-Space Complexity:
-- O(m) for skyline storage
-- O(n) for placed pallets tracking
-- O(1) for weight distribution tracking
+Placement Information:
+- Coordinates (x, y)
+- Rotation status
+- Stack height
+- Overhang details
 
-8. Configuration Management
-------------------------
-TruckConfig:
-- Standard dimensions
-- Weight limits
-- Safety clearances
-- Stacking rules
-
-ProductRules:
-- Product type constraints
-- Fragile item handling
-- Weight thresholds
-- Stacking restrictions
-
-9. Usage Example
+8. Usage Example
 --------------
 - Initialize TruckLoadOptimizer with dimensions
 - Define pallets with properties:
@@ -121,11 +112,13 @@ ProductRules:
   * Weight
   * Product type
   * Stackability
+  * Overhang amount
+  * Overhang configuration
 - Call pack_pallets() for optimization
 - Retrieve placement coordinates and instructions
 - Monitor metrics and constraints
 
-10. Future Enhancement Possibilities
+9. Future Enhancement Possibilities
 --------------------------------
 - Machine learning for pattern recognition
 - Historical data integration

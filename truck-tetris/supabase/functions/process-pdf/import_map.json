@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "https://deno.land/std@0.168.0/http/server.ts": "https://deno.land/std@0.168.0/http/server.ts",
+    "https://esm.sh/@supabase/supabase-js@2.38.4": "https://esm.sh/@supabase/supabase-js@2.38.4",
+    "@aws-sdk/client-textract": "https://cdn.skypack.dev/@aws-sdk/client-textract",
+    "@aws-sdk/client-s3": "https://cdn.skypack.dev/@aws-sdk/client-s3",
+    "pdf-lib": "https://cdn.skypack.dev/pdf-lib"
+  }
+} 

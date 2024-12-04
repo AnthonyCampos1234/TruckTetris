@@ -8,7 +8,6 @@ interface LineItem {
   qtyPerPallet: number;
   overhang: string;
   overhangBothSides: string;
-  amount: string;
   oneSideOverhang: string;
   otherSideOverhang: string;
 }
@@ -40,13 +39,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing orderId or raw_ocr_data' }, { status: 400 })
     }
 
-    // Recalculate totalPallets for each line item
-    const updatedLineItems = raw_ocr_data.lineItems.map((item: LineItem) => ({
-      ...item,
-      totalPallets: item.qtyPerPallet > 0
-        ? Math.ceil(item.quantityOrdered / item.qtyPerPallet)
-        : 0,
-    }))
+    // Filter out currency items and recalculate totalPallets
+    const updatedLineItems = raw_ocr_data.lineItems
+      .filter((item: LineItem) => !item.item.toLowerCase().includes('currency:'))
+      .map((item: LineItem) => ({
+        ...item,
+        totalPallets: item.qtyPerPallet > 0
+          ? Math.ceil(item.quantityOrdered / item.qtyPerPallet)
+          : 0,
+      }))
 
     const updatedRawOcrData: OrderData = {
       ...raw_ocr_data,

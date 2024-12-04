@@ -33,7 +33,6 @@ interface LineItem {
   qtyPerPallet: number;
   overhang: string;
   overhangBothSides: string;
-  amount: string;
   oneSideOverhang: string;
   otherSideOverhang: string;
 }
@@ -76,9 +75,18 @@ export default function OrderDetail() {
     }
 
     console.log('Fetched data:', data)
+    
+    // Filter out currency items from the raw OCR data
+    const filteredData = {
+      ...data.raw_ocr_data,
+      lineItems: data.raw_ocr_data.lineItems.filter((item: LineItem) => 
+        !item.item.toLowerCase().includes('currency:')
+      )
+    }
+    
     setOrder(data)
-    setOrderData(data.raw_ocr_data)
-    setEditedData(JSON.parse(JSON.stringify(data.raw_ocr_data)))
+    setOrderData(filteredData)
+    setEditedData(JSON.parse(JSON.stringify(filteredData)))
     setLoading(false)
   }
 
@@ -100,7 +108,6 @@ export default function OrderDetail() {
       case 'item':
       case 'overhang':
       case 'overhangBothSides':
-      case 'amount':
       case 'oneSideOverhang':
       case 'otherSideOverhang':
         updatedItem[field] = value
@@ -260,7 +267,6 @@ export default function OrderDetail() {
                     <TableHead className="text-center">QTY per Pallet</TableHead>
                     <TableHead className="text-center">Overhang?</TableHead>
                     <TableHead className="text-center">Overhang Both Sides?</TableHead>
-                    <TableHead className="text-center">Amount</TableHead>
                     <TableHead className="text-center">One Side Overhang</TableHead>
                     <TableHead className="text-center">Other Side Overhang</TableHead>
                   </TableRow>
@@ -286,7 +292,6 @@ export default function OrderDetail() {
                         ) : item.quantityOrdered}
                       </TableCell>
                       <TableCell>
-                        {/* Make Total Pallets Read-Only */}
                         <div className="text-center">
                           {item.totalPallets}
                         </div>
@@ -323,14 +328,6 @@ export default function OrderDetail() {
                             <option value="NO">NO</option>
                           </select>
                         ) : item.overhangBothSides}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Input
-                            value={item.amount}
-                            onChange={(e) => handleInputChange(index, 'amount', e.target.value)}
-                          />
-                        ) : item.amount}
                       </TableCell>
                       <TableCell>
                         {isEditing ? (

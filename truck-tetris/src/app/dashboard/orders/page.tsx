@@ -14,6 +14,15 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "@/components/ui/use-toast"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +38,23 @@ interface Order {
   delivery_date: string
   document_path: string
   created_at: string
+  raw_ocr_data: {
+    textLines: string[]
+  }
+}
+
+function extractOrderDetails(rawOCRData: any) {
+  if (!rawOCRData) {
+    return null;
+  }
+
+  console.log('Raw OCR data:', rawOCRData);
+
+  return {
+    orderNumber: rawOCRData.orderHeader?.orderNumber || 'Processing...',
+    customer: 'Shorr Packaging Corp.',
+    deliveryDate: rawOCRData.orderHeader?.ackDate || 'Processing...'
+  };
 }
 
 export default function Orders() {
@@ -36,6 +62,7 @@ export default function Orders() {
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<Order[]>([])
   const [userData, setUserData] = useState<any>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   useEffect(() => {
     checkUser()
@@ -137,6 +164,45 @@ export default function Orders() {
     window.open(data.signedUrl, '_blank')
   }
 
+  const handleClearOrders = async () => {
+    try {
+      console.log('Starting delete operation...');
+      
+      // Delete all orders with a simpler WHERE clause
+      const { data, error: deleteError } = await supabase
+        .from('orders')
+        .delete()
+        .neq('id', 0) // This will match all records since ID can't be 0
+        .select()
+
+      console.log('Delete response:', { data, error: deleteError });
+
+      if (deleteError) {
+        throw new Error(deleteError.message)
+      }
+
+      // Close the dialog
+      setShowDeleteDialog(false)
+      
+      // Refresh the orders list
+      await fetchOrders()
+
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `Successfully deleted ${data?.length || 0} orders`,
+      })
+
+    } catch (error) {
+      console.error('Error clearing orders:', error instanceof Error ? error.message : 'Unknown error')
+      toast({
+        title: "Error",
+        description: "Failed to delete orders",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>
   }
@@ -145,49 +211,96 @@ export default function Orders() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Order Information</h1>
-        <input type="file" accept=".pdf" onChange={handleFileUpload} />
+        <div className="flex gap-4">
+          <Button 
+            variant="destructive" 
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            Clear All Orders
+          </Button>
+          <Button 
+            variant="default" 
+            onClick={() => router.push('/dashboard')}
+          >
+            Upload File
+          </Button>
+        </div>
       </div>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear All Orders</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete all orders? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearOrders}
+            >
+              Delete All
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order #</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Destination</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Delivery Date</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="w-1/4">Order #</TableHead>
+              <TableHead className="w-1/4">Customer</TableHead>
+              <TableHead className="w-1/4">Delivery Date</TableHead>
+              <TableHead className="w-1/4">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.order_number || 'Processing...'}</TableCell>
-                <TableCell>{order.customer_name || 'Processing...'}</TableCell>
-                <TableCell>{order.destination || 'Processing...'}</TableCell>
-                <TableCell>{getStatusBadge(order.status)}</TableCell>
-                <TableCell>{order.delivery_date || 'Processing...'}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewDocument(order.document_path)}
-                    >
-                      View PDF
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/dashboard/orders/${order.id}`)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {orders.map((order) => {
+              let details = null;
+              if (order.raw_ocr_data) {
+                details = extractOrderDetails(order.raw_ocr_data);
+              }
+
+              return (
+                <TableRow key={order.id}>
+                  <TableCell className="font-medium">
+                    {details?.orderNumber || 'Processing...'}
+                  </TableCell>
+                  <TableCell>
+                    {details ? 'Shorr Packaging Corp.' : 'Processing...'}
+                  </TableCell>
+                  <TableCell>
+                    {details?.deliveryDate || 'Processing...'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewDocument(order.document_path)}
+                      >
+                        View PDF
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

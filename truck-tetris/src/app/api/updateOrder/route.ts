@@ -10,6 +10,9 @@ interface LineItem {
   overhangBothSides: string;
   oneSideOverhang: string;
   otherSideOverhang: string;
+  length: number;
+  width: number;
+  height: number;
 }
 
 interface OrderData {

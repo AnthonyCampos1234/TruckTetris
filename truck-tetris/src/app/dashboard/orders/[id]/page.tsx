@@ -28,6 +28,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { TruckVisualization } from '@/components/TruckVisualization'
+import { Textarea } from "@/components/ui/textarea"
 
 interface OrderData {
   orderHeader: {
@@ -110,6 +111,9 @@ export default function OrderDetail() {
   const [optimizationResult, setOptimizationResult] = useState<any>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const resultsRef = useRef<HTMLDivElement>(null)
+  const [showRepromptDialog, setShowRepromptDialog] = useState<number | null>(null)
+  const [repromptText, setRepromptText] = useState('')
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   useEffect(() => {
     fetchOrderDetails()
@@ -140,6 +144,7 @@ export default function OrderDetail() {
     }
 
     console.log('Fetched data:', data)
+    console.log('Optimization data:', data.raw_ocr_data?.optimization)
     
     // Filter out currency items from the raw OCR data
     const filteredData = {
@@ -152,6 +157,13 @@ export default function OrderDetail() {
     setOrder(data)
     setOrderData(filteredData)
     setEditedData(JSON.parse(JSON.stringify(filteredData)))
+
+    // Load optimization results if they exist
+    if (data.loading_instructions) {
+      console.log('Setting optimization result:', data.loading_instructions)
+      setOptimizationResult(data.loading_instructions)
+    }
+
     setLoading(false)
   }
 
@@ -287,20 +299,43 @@ export default function OrderDetail() {
         throw new Error(result.error)
       }
       
-      setOptimizationResult(result.data)
+      // Create the optimization result object
+      const newOptimizationResult = result.data
       
-      // Update the order with optimization results
+      // Update local state
+      setOptimizationResult(newOptimizationResult)
+      
+      console.log('Saving optimization result:', newOptimizationResult) // Debug log
+
+      // Update both columns to ensure data is stored
       const { error: updateError } = await supabase
         .from('orders')
         .update({
+          loading_instructions: newOptimizationResult,
           raw_ocr_data: {
             ...editedData,
-            optimization: result.data
+            optimization: newOptimizationResult
           }
         })
         .eq('id', params.id)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Error updating database:', updateError) // Debug log
+        throw updateError
+      }
+
+      // Verify the update
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('orders')
+        .select('loading_instructions')
+        .eq('id', params.id)
+        .single()
+
+      console.log('Verification data:', verifyData) // Debug log
+
+      if (verifyError) {
+        console.error('Error verifying update:', verifyError)
+      }
 
       // Close the dialog after successful optimization
       setDialogOpen(false)
@@ -326,6 +361,147 @@ export default function OrderDetail() {
       })
     } finally {
       setIsOptimizing(false)
+    }
+  }
+
+  const handleReprompt = async (truckIndex: number) => {
+    try {
+      setIsRegenerating(true)
+      
+      const response = await fetch('/api/regenerate-instructions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: params.id,
+          truckIndex,
+          feedback: repromptText,
+          currentPlan: optimizationResult.trucks[truckIndex],
+          lineItems: editedData?.lineItems,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate instructions')
+      }
+
+      const result = await response.json()
+      
+      // Update the optimization result with new instructions
+      const updatedTrucks = [...optimizationResult.trucks]
+      updatedTrucks[truckIndex] = result.data
+      
+      const newOptimizationResult = {
+        ...optimizationResult,
+        trucks: updatedTrucks,
+      }
+      
+      // Update local state
+      setOptimizationResult(newOptimizationResult)
+
+      // Update Supabase with the new optimization result
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          loading_instructions: newOptimizationResult  // Save to Supabase
+        })
+        .eq('id', params.id)
+
+      if (updateError) {
+        throw new Error('Failed to save changes to database')
+      }
+
+      // Close dialog and reset form
+      setShowRepromptDialog(null)
+      setRepromptText('')
+      
+      toast({
+        title: "Instructions Regenerated",
+        description: (
+          <div className="mt-2 space-y-2">
+            <p>{result.data.changes}</p>
+            <p className="text-sm text-muted-foreground">{result.data.reasoning}</p>
+          </div>
+        ),
+        duration: 5000,
+      })
+
+    } catch (error) {
+      console.error('Error regenerating instructions:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to regenerate instructions. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
+
+  const handleRepromptAll = async () => {
+    try {
+      setIsRegenerating(true)
+      
+      const response = await fetch('/api/regenerate-instructions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: params.id,
+          feedback: repromptText,
+          currentPlan: optimizationResult,
+          lineItems: editedData?.lineItems,
+          isFullRegeneration: true, // Flag to indicate full regeneration
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate instructions')
+      }
+
+      const result = await response.json()
+      
+      // Update local state with completely new optimization result
+      setOptimizationResult(result.data)
+
+      // Update Supabase with the new optimization result
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          loading_instructions: result.data
+        })
+        .eq('id', params.id)
+
+      if (updateError) {
+        throw new Error('Failed to save changes to database')
+      }
+
+      // Close dialog and reset form
+      setShowRepromptDialog(null)
+      setRepromptText('')
+      
+      toast({
+        title: "All Instructions Regenerated",
+        description: (
+          <div className="mt-2 space-y-2">
+            <p>{result.data.changes}</p>
+            <p className="text-sm text-muted-foreground">{result.data.reasoning}</p>
+          </div>
+        ),
+        duration: 5000,
+      })
+
+    } catch (error) {
+      console.error('Error regenerating instructions:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to regenerate instructions. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsRegenerating(false)
     }
   }
 
@@ -573,16 +749,47 @@ export default function OrderDetail() {
 
         {optimizationResult && (
           <div ref={resultsRef} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex justify-between items-center">
+                  <span>Loading Instructions</span>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowRepromptDialog(-1)} // Use -1 to indicate full regeneration
+                  >
+                    Regenerate All Instructions
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+            </Card>
+
             {optimizationResult.trucks.map((truck: any, index: number) => (
               <Card key={index} className="mt-8">
                 <CardHeader>
-                  <CardTitle>Truck {truck.truckNumber} Loading Plan</CardTitle>
+                  <CardTitle className="flex justify-between items-center">
+                    <span>Truck {truck.truckNumber} Loading Plan</span>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowRepromptDialog(index)}
+                    >
+                      Regenerate Instructions
+                    </Button>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <h4 className="font-semibold mb-2">Loading Plan</h4>
                     <p>{truck.loadingPlan}</p>
                   </div>
+
+                  {truck.changes && (
+                    <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                      <h4 className="font-semibold">Changes Made</h4>
+                      <p>{truck.changes}</p>
+                      <h4 className="font-semibold mt-3">Reasoning</h4>
+                      <p className="text-muted-foreground">{truck.reasoning}</p>
+                    </div>
+                  )}
 
                   <div>
                     <h4 className="font-semibold mb-2">Loading Sequence</h4>
@@ -667,6 +874,49 @@ export default function OrderDetail() {
                 </div>
               </CardContent>
             </Card>
+
+            <Dialog open={showRepromptDialog !== null} onOpenChange={() => setShowRepromptDialog(null)}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {showRepromptDialog === -1 
+                      ? "Regenerate All Loading Instructions" 
+                      : `Regenerate Truck ${(showRepromptDialog ?? 0) + 1} Instructions`}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Describe what's wrong with the current instructions or what specific changes you'd like to see.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <Textarea
+                  value={repromptText}
+                  onChange={(e) => setRepromptText(e.target.value)}
+                  placeholder="Example: The pallets need more space between them for forklift access"
+                  className="min-h-[100px]"
+                />
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRepromptDialog(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (showRepromptDialog === -1) {
+                        handleRepromptAll()
+                      } else {
+                        handleReprompt(showRepromptDialog ?? 0)
+                      }
+                    }}
+                    disabled={isRegenerating}
+                  >
+                    {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
       </div>

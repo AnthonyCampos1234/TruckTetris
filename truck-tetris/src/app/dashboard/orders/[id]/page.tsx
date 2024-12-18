@@ -54,16 +54,12 @@ interface LineItem {
   height: number;
 }
 
-// Add a helper function to convert different visualization formats
 function convertVisualization(visualization: any) {
-  // If visualization already has pallets array, return as is
   if (visualization.pallets) {
     return visualization.pallets
   }
 
-  // If visualization has sideView/topView arrays, convert to pallets format
   if (Array.isArray(visualization.sideView)) {
-    // Create simple visualization from ASCII art
     return [{
       id: 'converted',
       x: 10,
@@ -75,14 +71,13 @@ function convertVisualization(visualization: any) {
     }]
   }
 
-  // Return empty array as fallback
   return []
 }
 
 function extractOrderDetails(textLines: string[] | undefined) {
   if (!textLines || !Array.isArray(textLines)) {
     return {
-      orderNumber: '70615286-00',  // Default value
+      orderNumber: '70615286-00',  
       customer: 'Shorr Packaging Corp.',
       deliveryDate: '11/07/24',
       poNumber: '7007299598'
@@ -121,7 +116,7 @@ export default function OrderDetail() {
 
   useEffect(() => {
     if (orderData && !editedData) {
-      setEditedData(JSON.parse(JSON.stringify(orderData))) // Deep copy
+      setEditedData(JSON.parse(JSON.stringify(orderData))) 
     }
   }, [orderData])
 
@@ -146,7 +141,6 @@ export default function OrderDetail() {
     console.log('Fetched data:', data)
     console.log('Optimization data:', data.raw_ocr_data?.optimization)
     
-    // Filter out currency items from the raw OCR data
     const filteredData = {
       ...data.raw_ocr_data,
       lineItems: data.raw_ocr_data.lineItems.filter((item: LineItem) => 
@@ -158,7 +152,6 @@ export default function OrderDetail() {
     setOrderData(filteredData)
     setEditedData(JSON.parse(JSON.stringify(filteredData)))
 
-    // Load optimization results if they exist
     if (data.loading_instructions) {
       console.log('Setting optimization result:', data.loading_instructions)
       setOptimizationResult(data.loading_instructions)
@@ -196,7 +189,6 @@ export default function OrderDetail() {
         console.warn(`Unhandled field: ${field}`)
     }
 
-    // Auto-calculate totalPallets if quantityOrdered or qtyPerPallet changes
     if (field === 'quantityOrdered' || field === 'qtyPerPallet') {
       if (updatedItem.qtyPerPallet > 0) {
         updatedItem.totalPallets = Math.ceil(updatedItem.quantityOrdered / updatedItem.qtyPerPallet)
@@ -229,7 +221,6 @@ export default function OrderDetail() {
         throw new Error('No order ID provided')
       }
 
-      // Call the API route
       const response = await fetch('/api/updateOrder', {
         method: 'POST',
         headers: {
@@ -259,7 +250,6 @@ export default function OrderDetail() {
       })
     } catch (error) {
       console.error('Error saving changes:', error)
-      // Log the full error object
       console.log('Full error object:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -299,15 +289,12 @@ export default function OrderDetail() {
         throw new Error(result.error)
       }
       
-      // Create the optimization result object
       const newOptimizationResult = result.data
       
-      // Update local state
       setOptimizationResult(newOptimizationResult)
       
-      console.log('Saving optimization result:', newOptimizationResult) // Debug log
+      console.log('Saving optimization result:', newOptimizationResult) 
 
-      // Update both columns to ensure data is stored
       const { error: updateError } = await supabase
         .from('orders')
         .update({
@@ -320,27 +307,24 @@ export default function OrderDetail() {
         .eq('id', params.id)
 
       if (updateError) {
-        console.error('Error updating database:', updateError) // Debug log
+        console.error('Error updating database:', updateError) 
         throw updateError
       }
 
-      // Verify the update
       const { data: verifyData, error: verifyError } = await supabase
         .from('orders')
         .select('loading_instructions')
         .eq('id', params.id)
         .single()
 
-      console.log('Verification data:', verifyData) // Debug log
+      console.log('Verification data:', verifyData) 
 
       if (verifyError) {
         console.error('Error verifying update:', verifyError)
       }
 
-      // Close the dialog after successful optimization
       setDialogOpen(false)
 
-      // Wait for state updates and dialog close animation
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ 
           behavior: 'smooth',
@@ -388,7 +372,6 @@ export default function OrderDetail() {
 
       const result = await response.json()
       
-      // Update the optimization result with new instructions
       const updatedTrucks = [...optimizationResult.trucks]
       updatedTrucks[truckIndex] = result.data
       
@@ -397,14 +380,13 @@ export default function OrderDetail() {
         trucks: updatedTrucks,
       }
       
-      // Update local state
+
       setOptimizationResult(newOptimizationResult)
 
-      // Update Supabase with the new optimization result
       const { error: updateError } = await supabase
         .from('orders')
         .update({
-          loading_instructions: newOptimizationResult  // Save to Supabase
+          loading_instructions: newOptimizationResult  
         })
         .eq('id', params.id)
 
@@ -412,7 +394,6 @@ export default function OrderDetail() {
         throw new Error('Failed to save changes to database')
       }
 
-      // Close dialog and reset form
       setShowRepromptDialog(null)
       setRepromptText('')
       
@@ -453,7 +434,7 @@ export default function OrderDetail() {
           feedback: repromptText,
           currentPlan: optimizationResult,
           lineItems: editedData?.lineItems,
-          isFullRegeneration: true, // Flag to indicate full regeneration
+          isFullRegeneration: true, 
         }),
       })
 
@@ -463,10 +444,8 @@ export default function OrderDetail() {
 
       const result = await response.json()
       
-      // Update local state with completely new optimization result
       setOptimizationResult(result.data)
 
-      // Update Supabase with the new optimization result
       const { error: updateError } = await supabase
         .from('orders')
         .update({
@@ -478,7 +457,6 @@ export default function OrderDetail() {
         throw new Error('Failed to save changes to database')
       }
 
-      // Close dialog and reset form
       setShowRepromptDialog(null)
       setRepromptText('')
       
@@ -542,7 +520,6 @@ export default function OrderDetail() {
       </Card>
 
       <div className="grid gap-6">
-        {/* Line Items */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -755,7 +732,7 @@ export default function OrderDetail() {
                   <span>Loading Instructions</span>
                   <Button 
                     variant="outline"
-                    onClick={() => setShowRepromptDialog(-1)} // Use -1 to indicate full regeneration
+                    onClick={() => setShowRepromptDialog(-1)} 
                   >
                     Regenerate All Instructions
                   </Button>

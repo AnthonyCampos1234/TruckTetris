@@ -98,14 +98,12 @@ export default function Orders() {
       const file = event.target.files?.[0]
       if (!file || !userData) return
 
-      // Upload file
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('order_documents')
         .upload(`${userData.id}/${uuidv4()}.pdf`, file)
 
       if (uploadError) throw uploadError
 
-      // Create order record
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert([
@@ -120,7 +118,6 @@ export default function Orders() {
 
       if (orderError) throw orderError
 
-      // Trigger the processing function
       await fetch('/api/process-order', {
         method: 'POST',
         headers: {
@@ -129,7 +126,6 @@ export default function Orders() {
         body: JSON.stringify({ orderId: orderData.id })
       })
 
-      // Refresh orders list
       fetchOrders()
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -154,7 +150,7 @@ export default function Orders() {
   const handleViewDocument = async (documentPath: string) => {
     const { data, error } = await supabase.storage
       .from('order_documents')
-      .createSignedUrl(documentPath, 60) // URL valid for 60 seconds
+      .createSignedUrl(documentPath, 60) 
 
     if (error) {
       console.error('Error creating signed URL:', error)
@@ -168,11 +164,10 @@ export default function Orders() {
     try {
       console.log('Starting delete operation...');
       
-      // Delete all orders with a simpler WHERE clause
       const { data, error: deleteError } = await supabase
         .from('orders')
         .delete()
-        .neq('id', 0) // This will match all records since ID can't be 0
+        .neq('id', 0) 
         .select()
 
       console.log('Delete response:', { data, error: deleteError });
@@ -181,13 +176,10 @@ export default function Orders() {
         throw new Error(deleteError.message)
       }
 
-      // Close the dialog
       setShowDeleteDialog(false)
       
-      // Refresh the orders list
       await fetchOrders()
 
-      // Show success toast
       toast({
         title: "Success",
         description: `Successfully deleted ${data?.length || 0} orders`,

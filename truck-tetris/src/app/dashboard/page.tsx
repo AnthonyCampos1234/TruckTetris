@@ -33,7 +33,6 @@ export default function Dashboard() {
     
     checkUser()
 
-    // Cleanup timeout on unmount
     return () => {
       if (errorTimeoutRef.current) {
         clearTimeout(errorTimeoutRef.current)
@@ -57,14 +56,12 @@ export default function Dashboard() {
   }
 
   const showError = (message: string) => {
-    // Clear any existing timeout
     if (errorTimeoutRef.current) {
       clearTimeout(errorTimeoutRef.current)
     }
 
     setError(message)
 
-    // Set new timeout to clear error after 3 seconds
     errorTimeoutRef.current = setTimeout(() => {
       setError(null)
     }, 3000)
@@ -97,7 +94,6 @@ export default function Dashboard() {
           const fileName = `${uuidv4()}.pdf`
           const filePath = `${user.id}/${fileName}`
 
-          // Upload file
           console.log('Uploading file...')
           const { error: uploadError } = await supabase.storage
             .from('order_documents')
@@ -109,7 +105,6 @@ export default function Dashboard() {
           }
           console.log('File uploaded successfully')
 
-          // Create order
           console.log('Creating order record...')
           const { data: orderData, error: orderError } = await supabase
             .from('orders')
@@ -127,7 +122,6 @@ export default function Dashboard() {
           }
           console.log('Order created:', orderData)
 
-          // Call Edge Function
           console.log('Calling Edge Function...')
           try {
             const { data: { session } } = await supabase.auth.getSession()

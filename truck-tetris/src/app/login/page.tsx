@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase-client';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-// Add this console.log to debug
 console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
 
 export default function Login() {
@@ -27,7 +26,7 @@ export default function Login() {
       });
 
       if (error) throw error;
-      router.push('/dashboard'); // Redirect to dashboard after login
+      router.push('/dashboard'); 
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {

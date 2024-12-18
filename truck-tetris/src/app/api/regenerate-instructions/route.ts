@@ -28,7 +28,6 @@ export async function POST(req: Request) {
       throw new Error('Unexpected response format from Claude')
     }
 
-    // Parse and validate the response
     const newPlan = JSON.parse(textContent.text)
 
     return NextResponse.json({ 

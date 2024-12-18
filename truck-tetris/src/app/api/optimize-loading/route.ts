@@ -5,47 +5,37 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
 
-// Define standard truck dimensions
 const TRUCK_DIMENSIONS = {
-  length: 631, // 52'7" in inches
-  width: 100,  // inches
-  heightNose: 100, // inches
-  heightRear: 112, // inches
-  heightDoorOpening: 111 // inches
+  length: 631, 
+  width: 100,  
+  heightNose: 100, 
+  heightRear: 112, 
+  heightDoorOpening: 111 
 }
 
 function sanitizeJsonString(str: string): string {
-  // First remove markdown code block markers
   let cleanStr = str
     .replace(/```json\s*/, '')
     .replace(/```\s*$/, '')
     .trim()
 
   try {
-    // Try parsing it directly first
     JSON.parse(cleanStr)
     return cleanStr
   } catch (e) {
-    // If direct parsing fails, try additional sanitization
     cleanStr = cleanStr
-      // Replace triple quotes with single quotes
       .replace(/"""/g, '"')
-      // Handle backslashes in ASCII art
       .replace(/\\/g, '\\\\')
-      // Replace newlines with escaped newlines
       .replace(/\n/g, '\\n')
-      // Remove any remaining control characters
       .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
       .trim()
 
-    // Log the sanitized string for debugging
     console.log('Sanitized text:', cleanStr)
     
     return cleanStr
   }
 }
 
-// Add a function to chunk the trucks into smaller groups
 function chunkTrucks(trucks: any[], size: number) {
   const chunks = []
   for (let i = 0; i < trucks.length; i += size) {
@@ -56,7 +46,6 @@ function chunkTrucks(trucks: any[], size: number) {
 
 export async function POST(req: Request) {
   try {
-    // Check if API key is configured
     if (!process.env.ANTHROPIC_API_KEY) {
       console.error('Missing ANTHROPIC_API_KEY environment variable')
       return NextResponse.json(
@@ -67,7 +56,6 @@ export async function POST(req: Request) {
 
     const { lineItems, numTrucks, allowStacking } = await req.json()
 
-    // Validate input
     if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
       return NextResponse.json(
         { error: 'Invalid or empty line items' },
@@ -82,10 +70,9 @@ export async function POST(req: Request) {
       )
     }
 
-    const TRUCKS_PER_CHUNK = 2 // Process 2 trucks at a time
+    const TRUCKS_PER_CHUNK = 2 
     let allTrucks = []
 
-    // Process trucks in chunks
     for (let i = 0; i < numTrucks; i += TRUCKS_PER_CHUNK) {
       const currentChunkSize = Math.min(TRUCKS_PER_CHUNK, numTrucks - i)
       
@@ -166,7 +153,7 @@ Format the response as JSON with the following structure:
 
       try {
         const sanitizedText = sanitizeJsonString(textContent.text)
-        console.log('Raw response:', textContent.text) // Add this for debugging
+        console.log('Raw response:', textContent.text) 
         
         let chunkResult
         try {

@@ -2,16 +2,6 @@
 
 TruckTetris is an intelligent logistics management platform that optimizes truck loading patterns using AI. The system processes order documents, extracts relevant information, and generates efficient loading plans while considering various constraints and safety requirements.
 
-## Creator
-
-TruckTetris was developed by Anthony Campos, a software engineer specializing in logistics optimization and AI applications. The platform represents a culmination of expertise in both logistics operations and modern software development practices.
-
-[![GitHub](https://img.shields.io/badge/GitHub-AnthonyCampos-blue?style=flat&logo=github)](https://github.com/AnthonyCampos)
-
-For inquiries or collaboration opportunities, please reach out via:
-- Email: [your-email@example.com]
-- LinkedIn: [Your LinkedIn Profile]
-
 ## Case Study: Moran Logistics - Target Cardboard Supply Chain
 
 Moran Logistics has successfully implemented TruckTetris to optimize their cardboard supply chain operations for Target stores. This implementation has revolutionized their loading efficiency and delivery accuracy.
@@ -125,3 +115,8 @@ The application follows a modern serverless architecture:
 - Machine learning for pattern recognition
 - Integration with ERP systems
 - Real-time tracking capabilities
+
+## Creator
+
+Built by Anthony Campos
+[![GitHub](https://img.shields.io/badge/GitHub-AnthonyCampos-blue?style=flat&logo=github)](https://github.com/AnthonyCampos)

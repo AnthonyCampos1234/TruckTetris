@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "postbuild": "next-on-netlify"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -26,7 +26,9 @@
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "@netlify/plugin-nextjs": "^4.41.3",
+    "next-on-netlify": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",

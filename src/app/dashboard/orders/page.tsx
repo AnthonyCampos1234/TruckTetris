@@ -204,12 +204,12 @@ export default function Orders() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Order Information</h1>
         <div className="flex gap-4">
-          <Button 
+          {/* <Button 
             variant="destructive" 
             onClick={() => setShowDeleteDialog(true)}
           >
             Clear All Orders
-          </Button>
+          </Button> */}
           <Button 
             variant="default" 
             onClick={() => router.push('/dashboard')}
@@ -219,7 +219,7 @@ export default function Orders() {
         </div>
       </div>
 
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      {/* <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Clear All Orders</DialogTitle>
@@ -242,7 +242,7 @@ export default function Orders() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <Table>

@@ -4,13 +4,7 @@ TruckTetris is an intelligent logistics management platform that optimizes truck
 
 ## Case Study: Moran Logistics - Target Cardboard Supply Chain
 
-Moran Logistics has successfully implemented TruckTetris to optimize their cardboard supply chain operations for Target stores. This implementation has revolutionized their loading efficiency and delivery accuracy.
-
-### Implementation Highlights
-
-- **Scale**: Managing daily shipments of cardboard supplies to Target distribution centers
-- **Volume**: Processing 50+ truckloads per day of varying cardboard box sizes
-- **Optimization**: Reduced loading time by 35% while improving space utilization by 28%
+Moran Logistics has unsuccessfully implemented TruckTetris to optimize their cardboard supply chain operations for Target stores. This is the reason behind TruckTetrisv2.
 
 ### Key Outcomes
 
@@ -19,13 +13,6 @@ Moran Logistics has successfully implemented TruckTetris to optimize their cardb
 - Reduced product damage through optimized stacking patterns
 - Improved delivery accuracy and reduced returns
 - Real-time visibility into loading operations
-
-### Business Impact
-
-- 40% reduction in loading-related delays
-- 25% decrease in product damage during transit
-- Improved warehouse staff efficiency
-- Enhanced customer satisfaction through consistent delivery quality
 
 ## Features
 
@@ -91,30 +78,6 @@ The application follows a modern serverless architecture:
 3. **Processing Layer**: AWS Textract for document processing
 4. **Optimization Layer**: Claude AI for loading pattern generation
 5. **Storage Layer**: Supabase for database and file storage
-
-## Security
-
-- JWT-based authentication
-- Secure file handling
-- Environment variable protection
-- Role-based access control
-- Secure API endpoints
-
-## Performance
-
-- Parallel processing for multi-page documents
-- Optimized loading plan generation
-- Efficient data storage and retrieval
-- Responsive user interface
-- Real-time updates
-
-## Future Enhancements
-
-- Mobile application support
-- Advanced visualization options
-- Machine learning for pattern recognition
-- Integration with ERP systems
-- Real-time tracking capabilities
 
 ## Creator
 

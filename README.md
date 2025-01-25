@@ -4,7 +4,7 @@ TruckTetris is an intelligent logistics management platform that optimizes truck
 
 ## Case Study: Moran Logistics - Target Cardboard Supply Chain
 
-Moran Logistics has unsuccessfully implemented TruckTetris to optimize their cardboard supply chain operations for Target stores. This is the reason behind TruckTetrisv2.
+Moran Logistics has unsuccessfully implemented TruckTetris to optimize their cardboard supply chain operations for Target stores. This is the reason behind [TruckTetrisv2](https://github.com/AnthonyCampos1234/TruckTetrisv2). 
 
 ### Key Outcomes
 
